@@ -1,0 +1,11 @@
+= pitchfork_rss_reader
+
+Simple wrapper around the Pitchfork Best New Albums/Tracks RSS feeds:
+
+http://pitchfork.com/rss/
+http://feeds.feedburner.com/PitchforkBestNewAlbums?format=xml
+http://feeds.feedburner.com/PitchforkBestNewTracks?format=xml
+
+== Copyright
+
+Copyright (c) 2011 Tom Wey. See LICENSE.txt for further details.
