@@ -6,14 +6,12 @@ require 'htmlentities'
 
 module PitchforkRSSReader
 
-    class PitchforkRSSReader::NewAlbums
-
-        BASE_URL = 'http://feeds.feedburner.com/PitchforkBestNewAlbums?format=xml'
+    class PitchforkRSSReader::Base
 
         attr_reader :results
 
         def initialize
-            @results       = []
+            @results = []
 
             fetch_content()
             parse_rss()
@@ -24,49 +22,100 @@ module PitchforkRSSReader
 
         attr_reader :raw_content
         attr_reader :rss_content
+        attr_reader :feed_url
 
         def fetch_content
-            @raw_content = Net::HTTP.get(URI.parse(BASE_URL))
+            @raw_content = Net::HTTP.get(URI.parse(@feed_url))
         end
 
         def parse_rss
             @rss_content = RSS::Parser.parse(@raw_content, false)
         end 
-       
+      
+        def decode(encoded)
+            HTMLEntities.new.decode(encoded)
+        end 
+
+    end
+
+    class PitchforkRSSReader::BestNewAlbums < PitchforkRSSReader::Base
+
+        def initialize
+            @feed_url = 'http://feeds.feedburner.com/PitchforkBestNewAlbums?format=xml'
+            super
+        end
+
+        private
+
+        def parse_artist_and_title(artist_and_title)
+            artist_and_title.gsub!(/(^\s+|\s+$)/, '') 
+            artist, title = artist_and_title.split(/\n-/)
+            
+            if artist
+                artist = decode(artist)
+                artist.gsub!(/\n/, '')
+            end
+
+            if title
+                title = decode(title)
+                title.gsub!(/\n/, '')
+            end
+
+            return artist, title
+        end
+
         def build_results
             @rss_content.items.each do |item|
                 artist, title = parse_artist_and_title(item.title)
 
-                @results << PitchforkRSSReader::Album.new(
+                @results << PitchforkRSSReader::Result::Album.new(
                     :title  => title,
                     :artist => artist
                 )
             end
         end
 
+    end
+
+    class PitchforkRSSReader::BestNewTracks < PitchforkRSSReader::Base
+
+        def initialize
+            @feed_url = 'http://feeds.feedburner.com/PitchforkBestNewTracks?format=xml'
+            super
+        end
+
+        private
+
         def parse_artist_and_title(artist_and_title)
-
-            # strip leading/trailing whitespace
-            artist_and_title.gsub!(/(^\s+|\s+$)/, '') 
-
-            artist, title = artist_and_title.split(/\n-/)
+            artist, title = artist_and_title.split(/\s*-\s*/)
 
             if artist
-                artist.gsub!(/\n/, '') if artist
-                artist = HTMLEntities.new.decode(artist)
+                artist = decode(artist)
+                artist.gsub!(/\n/, '')
             end
 
             if title
-                title.gsub!(/\n/, '') if title
-                title = HTMLEntities.new.decode(title)
+                title = decode(title)
+                title.gsub!(/["\n]/, '')
             end
 
             return artist, title
         end
 
+        def build_results
+            @rss_content.items.each do |item|
+                artist, title = parse_artist_and_title(item.title)
+
+                @results << PitchforkRSSReader::Result::Track.new(
+                    :title  => title,
+                    :artist => artist
+                )
+            end
+        end
+
     end
 
-    class PitchforkRSSReader::Album
+    class PitchforkRSSReader::Result
 
         attr_reader :title
         attr_reader :artist
@@ -77,4 +126,13 @@ module PitchforkRSSReader
         end
 
     end
+
+    class PitchforkRSSReader::Result::Album < PitchforkRSSReader::Result
+
+    end
+
+    class PitchforkRSSReader::Result::Track < PitchforkRSSReader::Result
+
+    end
+
 end
