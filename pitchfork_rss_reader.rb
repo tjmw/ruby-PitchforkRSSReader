@@ -8,14 +8,14 @@ module PitchforkRSSReader
 
     class PitchforkRSSReader::Base
 
-        attr_reader :results
+        attr_reader :items
 
         def initialize
-            @results = []
+            @items = []
 
             fetch_content()
             parse_rss()
-            build_results()
+            build_items()
         end
 
         private
@@ -64,11 +64,11 @@ module PitchforkRSSReader
             return artist, title
         end
 
-        def build_results
+        def build_items
             @rss_content.items.each do |item|
                 artist, title = parse_artist_and_title(item.title)
 
-                @results << PitchforkRSSReader::Result::Album.new(
+                @items << PitchforkRSSReader::Item::Album.new(
                     :title  => title,
                     :artist => artist
                 )
@@ -102,11 +102,11 @@ module PitchforkRSSReader
             return artist, title
         end
 
-        def build_results
+        def build_items
             @rss_content.items.each do |item|
                 artist, title = parse_artist_and_title(item.title)
 
-                @results << PitchforkRSSReader::Result::Track.new(
+                @items << PitchforkRSSReader::Item::Track.new(
                     :title  => title,
                     :artist => artist
                 )
@@ -115,7 +115,7 @@ module PitchforkRSSReader
 
     end
 
-    class PitchforkRSSReader::Result
+    class PitchforkRSSReader::Item
 
         attr_reader :title
         attr_reader :artist
@@ -127,11 +127,11 @@ module PitchforkRSSReader
 
     end
 
-    class PitchforkRSSReader::Result::Album < PitchforkRSSReader::Result
+    class PitchforkRSSReader::Item::Album < PitchforkRSSReader::Item
 
     end
 
-    class PitchforkRSSReader::Result::Track < PitchforkRSSReader::Result
+    class PitchforkRSSReader::Item::Track < PitchforkRSSReader::Item
 
     end
 
